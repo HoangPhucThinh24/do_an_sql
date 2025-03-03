@@ -227,6 +227,65 @@ DELIMITER ;
 call timphimtheotheloai ('Hành động');
 
 
+-- 1.lấy phim có nhiều lịch chiếu nhất
+create view timmaxlichchieu as
+select phim.tenphim , count(lich_chieu.idphim) AS so_lich_chieu
+from phim join lich_chieu on phim.id = lich_chieu.idphim 
+group by phim.tenphim;
+
+select max(so_lich_chieu) from timmaxlichchieu;
+
+-- 2.lấy ra họ tên , t.gian chiếu ,tên phim mà khách hàng đã đặt
+select khach_hang.hoten , lich_chieu.thoigianchieu , phim.tenphim from khach_hang 
+join don_thanh_toan on khach_hang.id = don_thanh_toan.idkhachhang
+join lich_chieu on don_thanh_toan.idlichchieu = lich_chieu.id
+join phim on lich_chieu.idphim = phim.id
+-- 3. function lấy ra được rạp phim dựa theo phòng chiếu phim
+DELIMITER $$
+create function lay_rap_tu_phong (ma_phong int) 
+returns varchar(255) 
+deterministic
+begin
+declare ten_rap varchar(255);
+select count(phong_chieu_phim.id) into ma_phong from phong_chieu_phim where phong_chieu_phim.id = ma_phong;
+if ma_phong = 0 then
+return 'không tồn tại';
+else
+select rap_phim.tenrap into ten_rap from phong_chieu_phim
+join rap_phim ON phong_chieu_phim.idrapphim = rap_phim.id
+where phong_chieu_phim.id = ma_phong;
+end if;
+return ten_rap;
+end $$
+DELIMITER ;
+
+select lay_rap_tu_phong (100);
+
+-- 4. procedute lấy ra all nhân viên trong rạp phim
+DELIMITER $$
+create procedure lay_tat_ca_nhan_vien()
+begin
+select*from nhan_vien
+join rap_phim on nhan_vien.idrapphim = rap_phim.id;
+end $$
+DELIMITER ;
+
+call lay_tat_ca_nhan_vien();
+-- 5. function tính tổng phòng chiếu phim của rạp phim
+DELIMITER $$
+create function tong_phong_chieu_phim (ma_rap int)
+returns int
+deterministic
+begin
+declare tong_phong int;
+select count(*) into tong_phong from phong_chieu_phim
+where phong_chieu_phim.id = ma_rap;
+return tong_phong;
+end $$
+DELIMITER ;
+
+select tong_phong_chieu_phim (1);
+
 
 
 
